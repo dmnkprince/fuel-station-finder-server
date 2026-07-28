@@ -1,0 +1,21 @@
+{
+  "name": "fuel-station-finder-server",
+  "version": "1.0.0",
+  "description": "Backend API server for Fuel Station Finder (MongoDB Atlas + Mongoose)",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "seed": "node database/seedMongo.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.24.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
