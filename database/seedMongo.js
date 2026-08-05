@@ -13,54 +13,141 @@ try {
 
 dotenv.config();
 
-const sampleStations = [
+const bayelsaStations = [
   {
-    name: 'NNPC Plaza',
-    address: 'Herbert Macaulay Way, Central Business District, Abuja',
-    latitude: 9.0645,
-    longitude: 7.4875,
+    name: 'NNPC Mega Station (Ox-Bow Lake / Berger)',
+    address: 'Sanni Abacha Expressway, Ox-Bow Lake / Berger Roundabout Axis, Yenagoa 569101, Bayelsa State',
+    latitude: 4.8981,
+    longitude: 6.2946,
     brand: 'NNPC',
-    report: { fuel_type: 'PMS', price_per_litre: 650.0, is_available: true, queue_length: 'Short', upvotes: 5, minutesAgo: 30 },
+    // Status: Yellow (Queue) - available, long queue, < 2 hours
+    report: { fuel_type: 'PMS', price_per_litre: 1265.0, is_available: true, queue_length: 'Long', upvotes: 24, minutesAgo: 45 },
   },
   {
-    name: 'TotalEnergies - Victoria Island',
-    address: 'Adetokunbo Ademola St, Victoria Island, Lagos',
-    latitude: 6.4281,
-    longitude: 3.4219,
+    name: 'TotalEnergies Service Station',
+    address: 'Mbiama-Yenagoa Road, Akumani / Ekeki Axis, Yenagoa 569101, Bayelsa State',
+    latitude: 4.925,
+    longitude: 6.299,
     brand: 'TotalEnergies',
-    report: { fuel_type: 'PMS', price_per_litre: 620.0, is_available: true, queue_length: 'Moderate', upvotes: 12, minutesAgo: 60 },
+    // Status: Green (In Stock) - available, short queue, < 2 hours
+    report: { fuel_type: 'PMS', price_per_litre: 1300.0, is_available: true, queue_length: 'Short', upvotes: 18, minutesAgo: 30 },
   },
   {
-    name: 'Mobil - Lekki Phase 1',
-    address: 'Lekki-Epe Expressway, Lekki, Lagos',
-    latitude: 6.4369,
-    longitude: 3.4612,
-    brand: 'Mobil',
-    report: { fuel_type: 'PMS', price_per_litre: 0.0, is_available: false, queue_length: 'None', upvotes: 8, minutesAgo: 15 },
+    name: 'Rainoil Petrol Station',
+    address: 'PDP Junction, Isaac Boro Expressway, Biogbolo Corridor, Yenagoa 569101, Bayelsa State',
+    latitude: 4.931,
+    longitude: 6.303,
+    brand: 'Rainoil',
+    // Status: Yellow (Queue) - available, moderate queue, < 2 hours
+    report: { fuel_type: 'PMS', price_per_litre: 1320.0, is_available: true, queue_length: 'Moderate', upvotes: 15, minutesAgo: 15 },
   },
   {
-    name: 'Ardova PLC (AP) - Ikeja',
-    address: 'Obafemi Awolowo Way, Ikeja, Lagos',
-    latitude: 6.5967,
-    longitude: 3.3421,
+    name: 'Ardova PLC (AP) Station',
+    address: 'Mbiama-Yenagoa Road, Edepie Roundabout Corridor, Yenagoa, Bayelsa State',
+    latitude: 4.958,
+    longitude: 6.325,
     brand: 'AP',
-    report: { fuel_type: 'PMS', price_per_litre: 615.0, is_available: true, queue_length: 'Long', upvotes: 20, minutesAgo: 45 },
+    // Status: Red (No Stock) - not available, < 6 hours
+    report: { fuel_type: 'PMS', price_per_litre: 0.0, is_available: false, queue_length: 'None', upvotes: 9, minutesAgo: 120 },
   },
   {
-    name: 'Enyo Retail - Port Harcourt',
-    address: 'Aba Road, Port Harcourt',
-    latitude: 4.8156,
-    longitude: 7.0124,
-    brand: 'Enyo',
-    report: { fuel_type: 'PMS', price_per_litre: 670.0, is_available: true, queue_length: 'None', upvotes: 2, minutesAgo: 180 },
-  },
-  {
-    name: 'Conoil - Wuse Zone 6',
-    address: 'Herbert Macaulay Way, Wuse, Abuja',
-    latitude: 9.0682,
-    longitude: 7.4641,
+    name: 'Conoil Retail Outlet',
+    address: 'Mbiama-Yenagoa Road, Opposite DSP Alamieyeseigha Way Junction, Amarata, Yenagoa, Bayelsa State',
+    latitude: 4.935,
+    longitude: 6.287,
     brand: 'Conoil',
-    report: { fuel_type: 'PMS', price_per_litre: 645.0, is_available: true, queue_length: 'Short', upvotes: 1, minutesAgo: 840 },
+    // Status: Grey (Stale) - updated 8 hours ago (> 6 hours)
+    report: { fuel_type: 'PMS', price_per_litre: 1290.0, is_available: true, queue_length: 'Short', upvotes: 11, minutesAgo: 480 },
+  },
+  {
+    name: 'Matrix Energy Fuel Station',
+    address: 'Isaac Boro Expressway, Okutukutu / Etegwe Axis, Yenagoa, Bayelsa State',
+    latitude: 4.951,
+    longitude: 6.319,
+    brand: 'Matrix',
+    // Status: Green (In Stock) - available, no queue, < 2 hours
+    report: { fuel_type: 'PMS', price_per_litre: 1310.0, is_available: true, queue_length: 'None', upvotes: 13, minutesAgo: 10 },
+  },
+  {
+    name: 'BOVAS & Company Retail Station',
+    address: 'East-West Road Interchange, Sagbama Junction, Bayelsa State',
+    latitude: 5.148,
+    longitude: 6.215,
+    brand: 'BOVAS',
+    // Status: Green (In Stock) - available, no queue, < 2 hours
+    report: { fuel_type: 'PMS', price_per_litre: 1280.0, is_available: true, queue_length: 'None', upvotes: 7, minutesAgo: 20 },
+  },
+  {
+    name: 'Kobison Oil & Gas Ltd',
+    address: 'Isaac Adaka Boro Expressway, Central Yenagoa Corridor, Yenagoa 569101, Bayelsa State',
+    latitude: 4.938,
+    longitude: 6.291,
+    brand: 'Kobison',
+    // Status: Yellow (Queue) - available, long queue, < 2 hours
+    report: { fuel_type: 'PMS', price_per_litre: 1330.0, is_available: true, queue_length: 'Long', upvotes: 21, minutesAgo: 60 },
+  },
+  {
+    name: 'Paulo Marine & Oil Nigeria Limited',
+    address: 'Shell Ramp, Swali Market Road, Swali, Yenagoa 569101, Bayelsa State',
+    latitude: 4.9038,
+    longitude: 6.2725,
+    brand: 'Paulo Marine',
+    // Status: Red (No Stock) - not available, < 6 hours
+    report: { fuel_type: 'PMS', price_per_litre: 0.0, is_available: false, queue_length: 'None', upvotes: 16, minutesAgo: 90 },
+  },
+  {
+    name: 'Sobaz Petroleum Ltd (Sobaz Nig. Ltd.)',
+    address: 'Mbiama-Yenagoa Road, Opposite Ekeki Motor Park, Okaka / Ekeki Axis, Yenagoa 569101, Bayelsa State',
+    latitude: 4.922,
+    longitude: 6.297,
+    brand: 'Sobaz',
+    // Status: Grey (Stale) - updated 10 hours ago (> 6 hours)
+    report: { fuel_type: 'PMS', price_per_litre: 1320.0, is_available: true, queue_length: 'Short', upvotes: 8, minutesAgo: 600 },
+  },
+  {
+    name: 'Tonimas Filling Station',
+    address: 'Mbiama-Yenagoa Road, Edepie Corridor, Yenagoa 569101, Bayelsa State',
+    latitude: 4.96,
+    longitude: 6.328,
+    brand: 'Tonimas',
+    // Status: Red (No Stock) - not available, < 6 hours
+    report: { fuel_type: 'PMS', price_per_litre: 0.0, is_available: false, queue_length: 'None', upvotes: 14, minutesAgo: 180 },
+  },
+  {
+    name: 'NIPCO Partner Station',
+    address: 'Tombia-Etegwe Roundabout, Mbiama-Yenagoa Road, Yenagoa, Bayelsa State',
+    latitude: 4.968,
+    longitude: 6.331,
+    brand: 'NIPCO',
+    // Status: Green (In Stock) - available, short queue, < 2 hours
+    report: { fuel_type: 'PMS', price_per_litre: 1315.0, is_available: true, queue_length: 'Short', upvotes: 10, minutesAgo: 50 },
+  },
+  {
+    name: 'Azikel Petroleum / Refinery Station',
+    address: 'East-West Road Bypass, Obunagha / Polaku Interchange, Yenagoa 569101, Bayelsa State',
+    latitude: 5.011,
+    longitude: 6.368,
+    brand: 'Azikel',
+    // Status: Grey (Stale) - updated 12 hours ago (> 6 hours)
+    report: { fuel_type: 'PMS', price_per_litre: 1290.0, is_available: true, queue_length: 'None', upvotes: 19, minutesAgo: 720 },
+  },
+  {
+    name: 'GEC Petroleum Outlet',
+    address: 'Isaac Boro Expressway, Near INEC Junction, Kpansia, Yenagoa, Bayelsa State',
+    latitude: 4.933,
+    longitude: 6.307,
+    brand: 'GEC',
+    // Status: Yellow (Queue) - available, moderate queue, < 2 hours
+    report: { fuel_type: 'PMS', price_per_litre: 1320.0, is_available: true, queue_length: 'Moderate', upvotes: 6, minutesAgo: 40 },
+  },
+  {
+    name: 'Zarama Transit Fuel Station',
+    address: 'East-West Highway, Zarama Market Junction, Kolokuma/Opokuma LGA, Bayelsa Corridor, Bayelsa State',
+    latitude: 5.065,
+    longitude: 6.425,
+    brand: 'Zarama',
+    // Status: Green (In Stock) - available, no queue, < 2 hours
+    report: { fuel_type: 'PMS', price_per_litre: 1335.0, is_available: true, queue_length: 'None', upvotes: 12, minutesAgo: 15 },
   },
 ];
 
@@ -73,12 +160,12 @@ async function seedDatabase() {
   try {
     console.log('Connecting to MongoDB Atlas...');
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected! Clearing existing stations and reports...');
+    console.log('Connected! Seeding 15 distributed Bayelsa State filling stations...');
 
     await Station.deleteMany({});
     await Report.deleteMany({});
 
-    for (const item of sampleStations) {
+    for (const item of bayelsaStations) {
       const station = await Station.create({
         name: item.name,
         address: item.address,
@@ -102,7 +189,7 @@ async function seedDatabase() {
       console.log(`Seeded station: ${station.name}`);
     }
 
-    console.log('\nDatabase seeding completed successfully!');
+    console.log('\nAll 15 Bayelsa filling stations seeded successfully into MongoDB Atlas!');
     process.exit(0);
   } catch (err) {
     console.error('Error seeding database:', err);
