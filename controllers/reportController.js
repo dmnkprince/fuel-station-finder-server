@@ -1,9 +1,9 @@
 import * as ReportModel from '../models/reportModel.js';
 import * as StationModel from '../models/stationModel.js';
-import mongoose from 'mongoose';
 
 const VALID_FUEL_TYPES = ['PMS', 'AGO', 'DPK', 'LPG'];
 const VALID_QUEUE_LENGTHS = ['None', 'Short', 'Moderate', 'Long'];
+const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 /**
  * POST /api/reports
@@ -27,8 +27,8 @@ export async function submitReport(req, res) {
     });
   }
 
-  // Validate MongoDB ObjectId
-  if (!mongoose.Types.ObjectId.isValid(station_id)) {
+  // Validate station_id
+  if (!station_id || (typeof station_id === 'string' && station_id.includes('-') && !UUID_REGEX.test(station_id))) {
     return res.status(400).json({ success: false, message: 'Invalid station_id format.' });
   }
 
@@ -84,8 +84,7 @@ export async function submitReport(req, res) {
  */
 export async function upvoteReport(req, res) {
   try {
-    // Validate MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    if (!req.params.id || (req.params.id.includes('-') && !UUID_REGEX.test(req.params.id))) {
       return res.status(400).json({ success: false, message: 'Invalid report ID format.' });
     }
     const updated = await ReportModel.incrementUpvotes(req.params.id);

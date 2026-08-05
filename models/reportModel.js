@@ -1,82 +1,44 @@
-import mongoose from 'mongoose';
+import pool from '../config/db.js';
 
 /**
- * Report Schema
- * Crowdsourced price and availability report for a fuel station.
+ * Report PostgreSQL Model
  */
-const reportSchema = new mongoose.Schema(
-  {
-    station_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Station',
-      required: [true, 'station_id is required'],
-    },
-    fuel_type: {
-      type: String,
-      enum: {
-        values: ['PMS', 'AGO', 'DPK', 'LPG'],
-        message: 'fuel_type must be one of: PMS, AGO, DPK, LPG',
-      },
-      required: [true, 'fuel_type is required'],
-    },
-    price_per_litre: {
-      type: Number,
-      required: [true, 'price_per_litre is required'],
-      min: [0, 'price_per_litre must be a non-negative number'],
-    },
-    is_available: {
-      type: Boolean,
-      required: [true, 'is_available is required'],
-    },
-    queue_length: {
-      type: String,
-      enum: {
-        values: ['None', 'Short', 'Moderate', 'Long'],
-        message: 'queue_length must be one of: None, Short, Moderate, Long',
-      },
-      required: [true, 'queue_length is required'],
-    },
-    upvotes: {
-      type: Number,
-      default: 0,
-    },
-  },
-  { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
-);
-
-// Index for fast lookup of reports by station
-reportSchema.index({ station_id: 1, created_at: -1 });
-
-const Report = mongoose.model('Report', reportSchema);
-
-// ─── Model functions (same interface as old SQLite model) ──────────────────────
 
 /**
  * Fetch all reports for a specific station.
  */
 export async function findByStationId(stationId) {
-  return Report.find({ station_id: stationId }).sort({ created_at: -1 }).lean();
+  const result = await pool.query(
+    'SELECT id, station_id, fuel_type, price_per_litre, is_available, queue_length, upvotes, created_at FROM reports WHERE station_id = $1 ORDER BY created_at DESC',
+    [stationId]
+  );
+  return result.rows.map((r) => ({
+    ...r,
+    price_per_litre: parseFloat(r.price_per_litre),
+    upvotes: parseInt(r.upvotes, 10),
+  }));
 }
 
 /**
  * Insert a new report.
  */
 export async function create({ station_id, fuel_type, price_per_litre, is_available, queue_length }) {
-  const report = await Report.create({
-    station_id,
-    fuel_type,
-    price_per_litre,
-    is_available,
-    queue_length,
-  });
+  const result = await pool.query(
+    `INSERT INTO reports (station_id, fuel_type, price_per_litre, is_available, queue_length)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, station_id, fuel_type, price_per_litre, is_available, queue_length, upvotes, created_at`,
+    [station_id, fuel_type, price_per_litre, is_available, queue_length]
+  );
+
+  const report = result.rows[0];
   return {
-    id: report._id,
+    id: report.id,
     station_id: report.station_id,
     fuel_type: report.fuel_type,
-    price_per_litre: report.price_per_litre,
+    price_per_litre: parseFloat(report.price_per_litre),
     is_available: report.is_available,
     queue_length: report.queue_length,
-    upvotes: report.upvotes,
+    upvotes: parseInt(report.upvotes, 10),
     created_at: report.created_at,
   };
 }
@@ -85,22 +47,31 @@ export async function create({ station_id, fuel_type, price_per_litre, is_availa
  * Increment the upvote count on a report by 1.
  */
 export async function incrementUpvotes(reportId) {
-  const updated = await Report.findByIdAndUpdate(
-    reportId,
-    { $inc: { upvotes: 1 } },
-    { new: true }
-  ).lean();
-  if (!updated) return null;
+  const result = await pool.query(
+    `UPDATE reports 
+     SET upvotes = upvotes + 1 
+     WHERE id = $1 
+     RETURNING id, station_id, fuel_type, price_per_litre, is_available, queue_length, upvotes, created_at`,
+    [reportId]
+  );
+
+  if (result.rows.length === 0) return null;
+
+  const updated = result.rows[0];
   return {
-    id: updated._id,
+    id: updated.id,
     station_id: updated.station_id,
     fuel_type: updated.fuel_type,
-    price_per_litre: updated.price_per_litre,
+    price_per_litre: parseFloat(updated.price_per_litre),
     is_available: updated.is_available,
     queue_length: updated.queue_length,
-    upvotes: updated.upvotes,
+    upvotes: parseInt(updated.upvotes, 10),
     created_at: updated.created_at,
   };
 }
 
-export default Report;
+export default {
+  findByStationId,
+  create,
+  incrementUpvotes,
+};

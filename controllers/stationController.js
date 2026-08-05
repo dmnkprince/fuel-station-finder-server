@@ -1,5 +1,6 @@
 import * as StationModel from '../models/stationModel.js';
-import mongoose from 'mongoose';
+
+const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 /**
  * GET /api/stations
@@ -21,8 +22,8 @@ export async function getStations(req, res) {
  */
 export async function getStationDetails(req, res) {
   try {
-    // Validate MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    // Validate UUID format if necessary
+    if (!req.params.id || (req.params.id.includes('-') && !UUID_REGEX.test(req.params.id))) {
       return res.status(400).json({ success: false, message: 'Invalid station ID format.' });
     }
     const station = await StationModel.findById(req.params.id);

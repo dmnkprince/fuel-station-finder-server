@@ -1,14 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import connectDB from './config/db.js';
+import { initDB } from './config/db.js';
 import stationRoutes from './routes/stationRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 
 dotenv.config();
 
-// ─── Connect to MongoDB Atlas ─────────────────────────────────────────────────
-connectDB();
+// ─── Initialize PostgreSQL / Supabase Schema ─────────────────────────────────
+initDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,7 +26,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     message: 'Fuel Station Finder API Server is running.',
-    database: 'MongoDB Atlas',
+    database: 'PostgreSQL (Supabase / Render ready)',
     timestamp: new Date(),
   });
 });
