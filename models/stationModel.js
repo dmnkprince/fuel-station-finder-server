@@ -30,12 +30,12 @@ export async function findAllWithLatestReport() {
       if (latestReportRow) {
         const reportAge = (now - new Date(latestReportRow.created_at).getTime()) / (1000 * 60);
 
-        if (reportAge <= 720) { // 12 hours window
+        if (reportAge <= 20160) { // 2 weeks window (14 days × 24h × 60m)
           if (!latestReportRow.is_available) {
             status = 'red';
-          } else if (reportAge <= 120 && (latestReportRow.queue_length === 'Moderate' || latestReportRow.queue_length === 'Long')) {
+          } else if (reportAge <= 20160 && (latestReportRow.queue_length === 'Moderate' || latestReportRow.queue_length === 'Long')) {
             status = 'yellow';
-          } else if (reportAge <= 120) {
+          } else if (reportAge <= 20160) {
             status = 'green';
           }
         }
