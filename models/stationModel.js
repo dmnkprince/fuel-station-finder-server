@@ -232,6 +232,28 @@ export async function isManagerOfStation(userId, stationId) {
   return result.rows.length > 0;
 }
 
+/**
+ * Update a station.
+ */
+export async function update(id, { name, address, latitude, longitude, brand }) {
+  const result = await pool.query(
+    `UPDATE stations
+     SET name = $1, address = $2, latitude = $3, longitude = $4, brand = $5, updated_at = NOW()
+     WHERE id = $6
+     RETURNING id, name, address, latitude, longitude, brand, created_at`,
+    [name, address, parseFloat(latitude), parseFloat(longitude), brand, id]
+  );
+  return result.rows[0] || null;
+}
+
+/**
+ * Delete a station.
+ */
+export async function remove(id) {
+  const result = await pool.query('DELETE FROM stations WHERE id = $1 RETURNING id', [id]);
+  return result.rowCount > 0;
+}
+
 export default {
   findAllWithLatestReport,
   findById,
@@ -242,4 +264,7 @@ export default {
   getManagersByStation,
   getStationsByManager,
   isManagerOfStation,
+  update,
+  remove,
 };
+

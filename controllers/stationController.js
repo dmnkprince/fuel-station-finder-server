@@ -139,3 +139,62 @@ export async function getStationManagers(req, res) {
     res.status(500).json({ success: false, message: 'Failed to retrieve station managers.' });
   }
 }
+
+/**
+ * PUT /api/stations/:id  (Admin only)
+ * Updates details of a station.
+ */
+export async function updateStation(req, res) {
+  const { name, address, latitude, longitude, brand } = req.body;
+  if (!name || !address || !latitude || !longitude || !brand) {
+    return res.status(400).json({ success: false, message: 'All fields are required.' });
+  }
+
+  try {
+    if (!req.params.id || (req.params.id.includes('-') && !UUID_REGEX.test(req.params.id))) {
+      return res.status(400).json({ success: false, message: 'Invalid station ID format.' });
+    }
+
+    const station = await StationModel.findById(req.params.id);
+    if (!station) {
+      return res.status(404).json({ success: false, message: 'Station not found.' });
+    }
+
+    const updated = await StationModel.update(req.params.id, {
+      name,
+      address,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      brand,
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    console.error('Error updating station:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to update station.' });
+  }
+}
+
+/**
+ * DELETE /api/stations/:id  (Admin only)
+ * Deletes a station from the map.
+ */
+export async function deleteStation(req, res) {
+  try {
+    if (!req.params.id || (req.params.id.includes('-') && !UUID_REGEX.test(req.params.id))) {
+      return res.status(400).json({ success: false, message: 'Invalid station ID format.' });
+    }
+
+    const station = await StationModel.findById(req.params.id);
+    if (!station) {
+      return res.status(404).json({ success: false, message: 'Station not found.' });
+    }
+
+    await StationModel.remove(req.params.id);
+    res.json({ success: true, message: 'Station deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting station:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to delete station.' });
+  }
+}
+
