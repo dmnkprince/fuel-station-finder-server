@@ -8,7 +8,8 @@ const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}
 /**
  * POST /api/reports
  * Submit a live price/availability report for a station.
- * Required fields: station_id, fuel_type, price_per_litre, is_available, queue_length
+ * If the authenticated user is a station_manager posting for their own station,
+ * the report is marked as official.
  */
 export async function submitReport(req, res) {
   const { station_id, fuel_type, price_per_litre, is_available, queue_length } = req.body;
@@ -63,6 +64,32 @@ export async function submitReport(req, res) {
     return res.status(500).json({ success: false, message: 'Failed to verify station.' });
   }
 
+  // Permission check: only admin and station_manager can submit reports
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: 'Authentication required to submit reports.' });
+  }
+  if (req.user.role === 'user') {
+    return res.status(403).json({ success: false, message: 'Only station managers and admins can submit price/availability updates. Users can verify existing reports.' });
+  }
+
+  // Station managers can only report on their assigned stations
+  if (req.user.role === 'station_manager') {
+    const isAssigned = await StationModel.isManagerOfStation(req.user.id, station_id);
+    if (!isAssigned) {
+      return res.status(403).json({ success: false, message: 'You can only submit reports for stations assigned to you.' });
+    }
+  }
+
+  // Determine if this is an official report
+  let is_official = false;
+  let author_role = req.user.role;
+  if (req.user.role === 'station_manager') {
+    is_official = true; // Already verified they're assigned above
+  }
+  if (req.user.role === 'admin') {
+    is_official = true;
+  }
+
   try {
     const newReport = await ReportModel.create({
       station_id,
@@ -70,6 +97,8 @@ export async function submitReport(req, res) {
       price_per_litre,
       is_available,
       queue_length,
+      is_official,
+      author_role,
     });
     res.status(201).json({ success: true, data: newReport });
   } catch (err) {
@@ -95,5 +124,25 @@ export async function upvoteReport(req, res) {
   } catch (err) {
     console.error('Error upvoting report:', err.message);
     res.status(500).json({ success: false, message: 'Failed to upvote report.' });
+  }
+}
+
+/**
+ * PATCH /api/reports/:id/downvote
+ * Downvote / flag a report as inaccurate.
+ */
+export async function downvoteReport(req, res) {
+  try {
+    if (!req.params.id || (req.params.id.includes('-') && !UUID_REGEX.test(req.params.id))) {
+      return res.status(400).json({ success: false, message: 'Invalid report ID format.' });
+    }
+    const updated = await ReportModel.incrementDownvotes(req.params.id);
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Report not found.' });
+    }
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    console.error('Error downvoting report:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to flag report.' });
   }
 }

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { initDB } from './config/db.js';
 import stationRoutes from './routes/stationRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use(cors());
 app.use(express.json());
 
 // ─── API Routes ────────────────────────────────────────────────────────────────
+app.use('/api/auth', authRoutes);
 app.use('/api/stations', stationRoutes);
 app.use('/api/reports', reportRoutes);
 

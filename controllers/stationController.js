@@ -1,4 +1,5 @@
 import * as StationModel from '../models/stationModel.js';
+import * as UserModel from '../models/userModel.js';
 
 const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
@@ -22,7 +23,6 @@ export async function getStations(req, res) {
  */
 export async function getStationDetails(req, res) {
   try {
-    // Validate UUID format if necessary
     if (!req.params.id || (req.params.id.includes('-') && !UUID_REGEX.test(req.params.id))) {
       return res.status(400).json({ success: false, message: 'Invalid station ID format.' });
     }
@@ -38,12 +38,13 @@ export async function getStationDetails(req, res) {
 }
 
 /**
- * POST /api/stations
+ * POST /api/stations  (Admin only)
  * Adds a new fuel station to the map.
  * Required fields: name, address, latitude, longitude, brand
+ * Optional: manager_email (assigns a station manager)
  */
 export async function addStation(req, res) {
-  const { name, address, latitude, longitude, brand } = req.body;
+  const { name, address, latitude, longitude, brand, manager_email } = req.body;
 
   // Validation
   if (!name || !address || latitude === undefined || longitude === undefined || !brand) {
@@ -67,9 +68,74 @@ export async function addStation(req, res) {
 
   try {
     const newStation = await StationModel.create({ name, address, latitude, longitude, brand });
+
+    // Optionally assign a station manager
+    if (manager_email) {
+      const manager = await UserModel.findByEmail(manager_email);
+      if (manager && (manager.role === 'station_manager' || manager.role === 'admin')) {
+        await StationModel.addManager(newStation.id, manager.id);
+      }
+    }
+
     res.status(201).json({ success: true, data: newStation });
   } catch (err) {
     console.error('Error adding station:', err.message);
     res.status(500).json({ success: false, message: 'Failed to add station.' });
+  }
+}
+
+/**
+ * PATCH /api/stations/:id/assign-manager  (Admin only)
+ * Assigns a station manager to a station.
+ * Required: manager_email
+ */
+export async function assignManager(req, res) {
+  const { manager_email } = req.body;
+
+  if (!manager_email) {
+    return res.status(400).json({ success: false, message: 'manager_email is required.' });
+  }
+
+  try {
+    if (!req.params.id || (req.params.id.includes('-') && !UUID_REGEX.test(req.params.id))) {
+      return res.status(400).json({ success: false, message: 'Invalid station ID format.' });
+    }
+
+    const station = await StationModel.findById(req.params.id);
+    if (!station) {
+      return res.status(404).json({ success: false, message: 'Station not found.' });
+    }
+
+    const manager = await UserModel.findByEmail(manager_email);
+    if (!manager) {
+      return res.status(404).json({ success: false, message: 'User with that email not found.' });
+    }
+    if (manager.role !== 'station_manager' && manager.role !== 'admin') {
+      return res.status(400).json({ success: false, message: 'User must have station_manager or admin role.' });
+    }
+
+    await StationModel.addManager(req.params.id, manager.id);
+
+    res.json({ success: true, message: `Manager ${manager.name} assigned to station.` });
+  } catch (err) {
+    console.error('Error assigning manager:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to assign manager.' });
+  }
+}
+
+/**
+ * GET /api/stations/:id/managers  (Admin only)
+ * Returns all managers assigned to a station.
+ */
+export async function getStationManagers(req, res) {
+  try {
+    if (!req.params.id || (req.params.id.includes('-') && !UUID_REGEX.test(req.params.id))) {
+      return res.status(400).json({ success: false, message: 'Invalid station ID format.' });
+    }
+    const managers = await StationModel.getManagersByStation(req.params.id);
+    res.json({ success: true, data: managers });
+  } catch (err) {
+    console.error('Error fetching station managers:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to retrieve station managers.' });
   }
 }
