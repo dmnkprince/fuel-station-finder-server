@@ -38,19 +38,17 @@ export async function findAllWithLatestReport() {
 
   return result.rows.map((row) => {
     let latestReport = null;
-    let status = 'grey';
+    let status = 'red';
 
     if (row.report_id) {
       const reportAge = (now - new Date(row.report_created_at).getTime()) / (1000 * 60);
 
-      if (reportAge <= 1440) { // 24 hours
-        if (!row.is_available) {
-          status = 'red';
-        } else if (row.queue_length === 'Moderate' || row.queue_length === 'Long') {
-          status = 'yellow';
-        } else {
-          status = 'green';
-        }
+      if (!row.is_available) {
+        status = 'red';
+      } else if (row.queue_length === 'Moderate' || row.queue_length === 'Long') {
+        status = 'yellow';
+      } else {
+        status = 'green';
       }
 
       latestReport = {
@@ -108,15 +106,12 @@ export async function findById(id) {
   }));
 
   // Compute status from latest report
-  let status = 'grey';
+  let status = 'red';
   if (reports.length > 0) {
     const latest = reports[0];
-    const reportAge = (Date.now() - new Date(latest.created_at).getTime()) / (1000 * 60);
-    if (reportAge <= 1440) {
-      if (!latest.is_available) status = 'red';
-      else if (latest.queue_length === 'Moderate' || latest.queue_length === 'Long') status = 'yellow';
-      else status = 'green';
-    }
+    if (!latest.is_available) status = 'red';
+    else if (latest.queue_length === 'Moderate' || latest.queue_length === 'Long') status = 'yellow';
+    else status = 'green';
   }
 
   return {
